@@ -8,15 +8,13 @@ PIN_OUT = 31
 FREQ = 1/80
 WIDTH = FREQ * .5
 
-PAUSE = .0001
-
 GPIO.setmode(GPIO.BOARD)
 
 GPIO.setup(PIN_IN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GPIO.setup(PIN_OUT, GPIO.OUT, initial=0)
 
 def pause():
-  time.sleep(PAUSE)
+  time.sleep(0)
 
 def eq(a, b, eps):
   return abs(a-b) < eps
@@ -30,6 +28,9 @@ class Tick:
     self.state = state
     self.rising = edge == 1
     self.falling = edge == 2
+    
+  def __str__(self):
+    return '/' if self.rising else '\\' if self.falling else '‾' if self.state else '_'
 
 class Clock:
   width: float
@@ -78,8 +79,6 @@ def main_a():
         s = buff.pop(0)
       else:
         break
-      
-    # print('/' if tick.rising else '\\' if tick.falling else '‾' if (tick.state) else '_', end='', flush=True)
       
     GPIO.output(PIN_OUT, tick.state and s)
   
@@ -155,62 +154,6 @@ def main_b():
   
   msg = recv_bytes(msg_len).decode('utf-8')
   print('msg: ',repr(msg))
-  
-  return    
-  
-  while True:
-    
-    time.sleep(PAUSE)
-    
-    if state == 0:
-      if high():
-        sync_start = now()
-        state = 1
-    
-    if state == 1:
-      if low():
-        t = now()
-        sync_len = t - sync_start
-        clk = Clock(sync_len, FREQ)
-        clk.ref = t + sync_len / 2
-        state = 2
-        
-    if state == 2:
-      tick = clk.tick()
-      
-      # print('/' if tick.rising else '\\' if tick.falling else '‾' if (tick.state) else '_', end='', flush=True)
-      
-      # if high() and not syncing:
-      #   sync_start = now()
-      #   syncing = True
-      #   
-      # if low() and syncing:
-      #   t = now()
-      #   sync_len = t - sync_start
-      #   ref = t + sync_len / 2
-      #   # print('-------------')
-      #   # print('%.4f %.4f\n%.4f %.4f' % (clk.ref % clk.freq, clk.ref % sync_len, ref % clk.freq, ref % sync_len))
-      #   # print('-------------')
-      #   print('-------------')
-      #   print((ref-clk.ref) % sync_len)
-      #   print(clk.width - sync_len)
-      #   print('%.4f %.4f' % (clk.ref % clk.freq, clk.ref % sync_len))
-      #   print('-------------')
-      #   syncing = False
-      
-      if tick.state:
-        hits.append(high())
-      
-      elif len(hits):
-        v = eq(sum(hits)/len(hits), 1, .2)
-        print(sum(hits)/len(hits))
-        d.append(v)
-        hits = []
-        
-      if len(d) >= 2:
-        print(list(map(int,d)))
-        d = []
-        state = 0
 
 def main():
   if len(argv) <= 1:
